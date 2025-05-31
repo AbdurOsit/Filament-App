@@ -6,12 +6,16 @@ use App\Filament\Resources\FakturResource\Pages;
 use App\Filament\Resources\FakturResource\RelationManagers;
 use App\Models\CustomerModel;
 use App\Models\Faktur;
+use App\Models\Barang;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\TextArea;
 use Filament\Forms\Form;
+use Filament\Forms\Set;
+use Filament\Forms\Get;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
@@ -29,32 +33,170 @@ class FakturResource extends Resource
     {
         return $form
             ->schema([
-                TextInput::make('nama_faktur'),
+                TextInput::make('kode_faktur')
+                    ->numeric()
+                    ->columnSpan(2),
+                TextInput::make('nama_faktur')
+                    ->columnSpan(2),
                 DatePicker::make('tanggal_faktur')
                     ->displayFormat('d m Y')
-                    ->locale('id'),
-                TextInput::make('kode_faktur')->numeric(),
+                    ->locale('id')
+                    ->columnSpan([
+                        'default' => 2,
+                        'md' => 1,
+                        'lg' => 1,
+                        'xl' => 1,
+                    ]),
                 // TextInput::make('customer_id'),
                 Select::make('customer_id')
+                    ->reactive()
                     ->label('ID Customer')
-                    ->relationship('customer', 'nama_customer'),
+                    ->relationship('customer', 'nama_customer')
+                    ->columnSpan([
+                        'default' => 2,
+                        'md' => 1,
+                        'lg' => 1,
+                        'xl' => 1,
+                    ])
+                    ->afterStateUpdated(function ($state, callable $set) {
+                        $customer = CustomerModel::find($state);
+
+                        if ($customer) {
+                            $set('kode_customer', $customer->kode_customer);
+                        }
+                    }),
+                TextInput::make('kode_customer')
+                    ->reactive()
+                    ->columnSpan(2)
+                    ->disabled(),
                 Repeater::make('detail')
                     ->relationship()
                     ->schema([
                         Select::make('barang_id')
-                            ->relationship('barang','nama_barang'),
-                        TextInput::make('diskon')->numeric(),
-                        TextInput::make('nama_barang'),
-                        TextInput::make('harga')->numeric(),
-                        TextInput::make('subtotal')->numeric(),
-                        TextInput::make('qty')->numeric(),
-                        TextInput::make('hasil_qty')->numeric(),
+                            ->relationship('barang', 'nama_barang')
+                            ->columnSpan([
+                                'default' => 2,
+                                'md' => 1,
+                                'lg' => 1,
+                                'xl' => 1,
+                            ])
+                            ->reactive()
+                            ->afterStateUpdated(function ($state, callable $set) {
+                                $barang = Barang::find($state);
+                                if ($barang) {
+                                    $set('harga', $barang->harga_barang);
+                                    $set('nama_barang', $barang->nama_barang);
+                                }
+                            })
+                            ->afterStateHydrated(function ($state, callable $set) {
+                                $barang = Barang::find($state);
+                                if ($barang) {
+                                    $set('harga', $barang->harga_barang);
+                                    $set('nama_barang', $barang->nama_barang);
+                                }
+                            }),
+                        TextInput::make('nama_barang')
+                            ->columnSpan([
+                                'default' => 2,
+                                'md' => 1,
+                                'lg' => 1,
+                                'xl' => 1,
+                            ])
+                            ->reactive()
+                            ->readOnly(),
+                        TextInput::make('harga')->numeric()
+                            ->columnSpan([
+                                'default' => 2,
+                                'md' => 1,
+                                'lg' => 1,
+                                'xl' => 1,
+                            ])
+                            ->prefix('Rp'),
+                        TextInput::make('qty')->numeric()
+                            ->reactive()
+                            ->columnSpan([
+                                'default' => 2,
+                                'md' => 1,
+                                'lg' => 1,
+                                'xl' => 1,
+                            ])->afterStateUpdated(function (Set $set, $state, Get $get) {
+                                $tampungHarga = $get('harga');
+                                $set('hasil_qty', intval($state * $tampungHarga));
+                            })
+                            ,
+                        TextInput::make('hasil_qty')->numeric()
+                            ->reactive()
+                            ->columnSpan([
+                                'default' => 2,
+                                'md' => 1,
+                                'lg' => 1,
+                                'xl' => 1,
+                            ]),
+                        TextInput::make('diskon')->numeric()
+                            ->reactive()
+                            ->columnSpan([
+                                'default' => 2,
+                                'md' => 1,
+                                'lg' => 1,
+                                'xl' => 1,
+                            ])
+                            ->afterStateUpdated(function (Set $set, $state, Get $get) {
+                                $hasilQty = $get('hasil_qty');
+                                $diskon = $hasilQty * ($state /100);
+                                $hasil = $hasilQty - $diskon;
+                                $set('subtotal', intval($hasil));
+                            }),
+                        TextInput::make('subtotal')->numeric()
+                            ->reactive()
+                            ->columnSpan([
+                                'default' => 2,
+                                'md' => 1,
+                                'lg' => 1,
+                                'xl' => 1,
+                            ])
+                            ->live(),
+                    ])
+                    ->columnSpan(2),
+                TextArea::make('ket_faktur')
+                    ->columnSpan(2),
+                TextInput::make('total')
+                    ->reactive()
+                    ->placeholder(function(Set $set, Get $get){
+                        $detail = collect($get('detail'))->pluck('subtotal')->sum();
+                        if($detail == null){
+                            $set('total',0);
+                        }else{
+                            $set('total',$detail);
+                        }
+                    })
+                    ->columnSpan([
+                        'default' => 2,
+                        'md' => 1,
+                        'lg' => 1,
+                        'xl' => 1,
                     ]),
-                TextInput::make('ket_faktur'),
-                TextInput::make('total')->numeric(),
-                TextInput::make('nominal_charge')->numeric(),
-                TextInput::make('charge')->numeric(),
-                TextInput::make('total_final')->numeric(),
+                TextInput::make('nominal_charge')
+                    ->numeric()
+                    ->columnSpan([
+                        'default' => 2,
+                        'md' => 1,
+                        'lg' => 1,
+                        'xl' => 1,
+                    ])
+                    ->reactive()
+                    ->afterStateUpdated(function (Set $set, $state, Get $get) { 
+                        $total = $get('total');
+                        $charge = $total * ($state / 100);
+                        $hasil = $total * $charge;
+                        $set('total_final',$hasil);
+                        $set('charge',$charge);
+                    }),
+                TextInput::make('charge')->numeric()
+                    ->reactive()
+                    ->columnSpan(2),
+                TextInput::make('total_final')->numeric()
+                    ->reactive()
+                    ->columnSpan(2),
             ]);
     }
 
