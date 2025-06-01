@@ -26,7 +26,8 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 class FakturResource extends Resource
 {
     protected static ?string $model = Faktur::class;
-
+    protected static ?string $navigationGroup = 'Faktur';
+    protected static ?string $navigationLabel = 'Faktur';
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
     public static function form(Form $form): Form
@@ -111,7 +112,8 @@ class FakturResource extends Resource
                                 'lg' => 1,
                                 'xl' => 1,
                             ])
-                            ->prefix('Rp'),
+                            ->prefix('Rp')
+                            ->readOnly(),
                         TextInput::make('qty')->numeric()
                             ->reactive()
                             ->columnSpan([
@@ -193,10 +195,12 @@ class FakturResource extends Resource
                     }),
                 TextInput::make('charge')->numeric()
                     ->reactive()
-                    ->columnSpan(2),
+                    ->columnSpan(2)
+                    ->readOnly(),
                 TextInput::make('total_final')->numeric()
                     ->reactive()
-                    ->columnSpan(2),
+                    ->columnSpan(2)
+                    ->readOnly(),
             ]);
     }
 
