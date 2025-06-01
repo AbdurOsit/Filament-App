@@ -10,6 +10,7 @@ use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -54,8 +55,8 @@ class PenjualanResource extends Resource
                     ->label('Nama Customer')
                     ->searchable()
                     ->sortable(),
-                TextColumn::make('faktur.kode_faktur')
-                    ->label('Kode Faktur')
+                TextColumn::make('kode')
+                    ->label('Kode')
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('status')
@@ -72,6 +73,16 @@ class PenjualanResource extends Resource
                 //     ->label('Keterangan')
                 //     ->searchable()
                 //     ->sortable(),
+            ])
+            ->emptyStateHeading('Tidak ada laporan')
+            ->emptyStateDescription('Silahkan tambahkan faktur terlebih dahulu')
+            ->emptyStateIcon('heroicon-o-presentation-chart-bar')
+            ->emptyStateActions([
+            Action::make('create')
+                ->label('Buat Faktur')
+                ->url(route('filament.admin.resources.fakturs.create'))
+                ->icon('heroicon-m-plus')
+                ->button(),
             ])
             ->filters([
                 //
