@@ -16,7 +16,7 @@ class ListPenjualans extends ListRecords
             Actions\CreateAction::make()
             ->label('tambah')
             ->icon('heroicon-m-plus')
-            ->color('success')
+            ->color('info')
             ,
         ];
     }
