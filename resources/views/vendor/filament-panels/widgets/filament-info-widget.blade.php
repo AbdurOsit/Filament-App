@@ -8,6 +8,7 @@
                     target="_blank"
                 >
                     <svg
+                        {{-- aria-label="Filament" --}}
                         aria-label="Toko Barang"
                         fill="currentColor"
                         role="img"
